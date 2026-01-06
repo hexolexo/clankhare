@@ -52,7 +52,7 @@ MINECRAFT_IP=10.0.0.255
 RCON_Password=PASSWORD
 ```
 
-3. setup minecraft.nix module
+3. setup clankhare.nix module
 
 ```nix
 { pkgs, inputs, config, ... }: {
@@ -86,6 +86,7 @@ RCON_Password=PASSWORD
 }
 ```
 
+4. import clankhare.nix in you configuration.nix
 
 
 ## Commands
