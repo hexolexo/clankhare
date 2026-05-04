@@ -1,25 +1,20 @@
 package main
 
 import (
+	"Clankhare/commands"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"regexp"
-	"sync"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/gorcon/rcon"
 )
 
-// Variables used for command line parameters
 var (
-	Token           string
-	Minecraft_IP    string
-	RCON_Password   string
-	whitelistCounts = make(map[string]int) // userID -> count
-	countMutex      sync.Mutex
+	Token         string
+	Minecraft_IP  string
+	RCON_Password string
 )
 
 func init() {
@@ -29,109 +24,35 @@ func init() {
 }
 
 func main() {
-
-	// Create a new Discord session using the provided bot token.
 	session, err := discordgo.New("Bot " + Token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
+		log.Fatal("error creating Discord session:", err)
 	}
 
-	session.AddHandler(whitelist)
+	session.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		for _, cmd := range commands.Registry {
+			if cmd.Definition.Name == i.ApplicationCommandData().Name {
+				cmd.Handler(s, i)
+				return
+			}
+		}
+	})
 
 	session.Identify.Intents = discordgo.IntentsGuildMessages | discordgo.IntentMessageContent
-
-	err = session.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return
+	if err = session.Open(); err != nil {
+		log.Fatal("error opening connection:", err)
 	}
 
-	commands := []*discordgo.ApplicationCommand{
-		{
-			Name:        "whitelist",
-			Description: "Add player to whitelist",
-			Options: []*discordgo.ApplicationCommandOption{
-				{
-					Type:        discordgo.ApplicationCommandOptionString,
-					Name:        "player",
-					Description: "Minecraft username",
-					Required:    true,
-				},
-			},
-		},
-		// Add more commands here
-	}
-
-	for _, cmd := range commands {
-		_, err = session.ApplicationCommandCreate(session.State.User.ID, "", cmd)
+	for _, cmd := range commands.Registry {
+		_, err = session.ApplicationCommandCreate(session.State.User.ID, "", cmd.Definition)
 		if err != nil {
-			fmt.Printf("Cannot create command %session: %v\n", cmd.Name, err)
+			log.Fatalf("cannot create command %s: %v", cmd.Definition.Name, err)
 		}
 	}
 
-	// Wait here until CTRL-C or other term signal is received.
-	fmt.Println("Bot is now running.  Press CTRL-C to exit.")
+	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
-
-	// Cleanly close down the Discord session.
 	session.Close()
-}
-func whitelist(session *discordgo.Session, interaction *discordgo.InteractionCreate) {
-	if interaction.ApplicationCommandData().Name != "whitelist" {
-		return
-	}
-	userID := interaction.Member.User.ID
-	countMutex.Lock()
-	count := whitelistCounts[userID]
-	if count >= 3 {
-		countMutex.Unlock()
-		session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
-			Data: &discordgo.InteractionResponseData{
-				Content: "You've used all 3 whitelist slots",
-				Flags:   discordgo.MessageFlagsEphemeral,
-			},
-		})
-		return
-	}
-	// Increment before unlocking so two rapid requests don't both slip through
-	whitelistCounts[userID]++
-	countMutex.Unlock()
-
-	player := interaction.ApplicationCommandData().Options[0].StringValue()
-
-	// Ack immediately, RCON will blow Discord's 3s timeout
-	session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
-	})
-
-	go func() {
-		err := whitelistPlayer(player)
-		content := fmt.Sprintf("Whitelisted %s", player)
-		if err != nil {
-			content = fmt.Sprintf("Failed to whitelist %s: %v", player, err)
-			log.Printf("RCON error: %v", err)
-			// WARN: count already incremented, failed whitelists still burn a slot
-		}
-		session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
-			Content: &content,
-		})
-	}()
-}
-
-func whitelistPlayer(username string) error {
-	if !regexp.MustCompile(`^[a-zA-Z0-9_]{3,16}$`).MatchString(username) {
-		return fmt.Errorf("invalid minecraft username format")
-	}
-	conn, err := rcon.Dial(Minecraft_IP+":16260", RCON_Password)
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
-
-	_, err = conn.Execute(fmt.Sprintf("whitelist add %s", username))
-	return err
 }
