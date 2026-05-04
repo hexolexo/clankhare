@@ -84,7 +84,6 @@ func whitelist(session *discordgo.Session, interaction *discordgo.InteractionCre
 		return
 	}
 	userID := interaction.Member.User.ID
-
 	countMutex.Lock()
 	count := whitelistCounts[userID]
 	if count >= 3 {
@@ -98,25 +97,29 @@ func whitelist(session *discordgo.Session, interaction *discordgo.InteractionCre
 		})
 		return
 	}
+	// Increment before unlocking so two rapid requests don't both slip through
+	whitelistCounts[userID]++
+	countMutex.Unlock()
 
 	player := interaction.ApplicationCommandData().Options[0].StringValue()
 
-	err := whitelistPlayer(player)
-
-	var content string
-	if err != nil {
-		content = fmt.Sprintf("Failed to whitelist %s: %v", player, err)
-		log.Printf("RCON error: %v", err)
-	} else {
-		content = fmt.Sprintf("Whitelisted %s", player)
-	}
-
+	// Ack immediately, RCON will blow Discord's 3s timeout
 	session.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: content,
-		},
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 	})
+
+	go func() {
+		err := whitelistPlayer(player)
+		content := fmt.Sprintf("Whitelisted %s", player)
+		if err != nil {
+			content = fmt.Sprintf("Failed to whitelist %s: %v", player, err)
+			log.Printf("RCON error: %v", err)
+			// WARN: count already incremented, failed whitelists still burn a slot
+		}
+		session.InteractionResponseEdit(interaction.Interaction, &discordgo.WebhookEdit{
+			Content: &content,
+		})
+	}()
 }
 
 func whitelistPlayer(username string) error {
