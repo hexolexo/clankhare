@@ -129,6 +129,6 @@ func whitelistPlayer(username string) error {
 	}
 	defer conn.Close()
 
-	_, err = conn.Execute(fmt.Sprintf("whitelist add %session", username))
+	_, err = conn.Execute(fmt.Sprintf("whitelist add %s", username))
 	return err
 }
