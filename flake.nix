@@ -50,7 +50,7 @@
             description = "The clankhare package to use";
           };
 
-          configFiles = lib.mkOption {
+          configFile = lib.mkOption {
             type = lib.types.path;
             description = "Path to a file containing the bot token (keeps it out of the nix store)";
           };
@@ -85,7 +85,7 @@
 
               # Reads the token from a file and injects it as an env var —
               # adjust the var name to whatever your bot actually reads
-              EnvironmentFile = cfg.configFiles;
+              EnvironmentFile = cfg.configFile;
 
               # Basic hardening — tighten as needed
               NoNewPrivileges = true;
