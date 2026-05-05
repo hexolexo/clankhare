@@ -19,7 +19,7 @@
         version = "0.0.1";
         src = ./.;
 
-        vendorHash = "sha256-S9DjLjDHAjnu88s6+Q52ZlydBOHUBAVjfg8WAWfDz7M=";
+        vendorHash = null;
 
         env = {
           CGO_ENABLED = 1;
