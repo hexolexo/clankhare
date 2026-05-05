@@ -1,0 +1,38 @@
+# github.com/bwmarrin/discordgo v0.29.0
+## explicit; go 1.13
+github.com/bwmarrin/discordgo
+# github.com/gorcon/rcon v1.4.0
+## explicit; go 1.23
+github.com/gorcon/rcon
+# github.com/gorilla/websocket v1.4.2
+## explicit; go 1.12
+github.com/gorilla/websocket
+# github.com/klauspost/compress v1.18.5
+## explicit; go 1.24
+github.com/klauspost/compress/flate
+github.com/klauspost/compress/internal/le
+# github.com/nats-io/nats.go v1.51.0
+## explicit; go 1.25.0
+github.com/nats-io/nats.go
+github.com/nats-io/nats.go/encoders/builtin
+github.com/nats-io/nats.go/internal/parser
+github.com/nats-io/nats.go/util
+# github.com/nats-io/nkeys v0.4.15
+## explicit; go 1.24.0
+github.com/nats-io/nkeys
+# github.com/nats-io/nuid v1.0.1
+## explicit
+github.com/nats-io/nuid
+# golang.org/x/crypto v0.49.0
+## explicit; go 1.25.0
+golang.org/x/crypto/blake2b
+golang.org/x/crypto/curve25519
+golang.org/x/crypto/internal/alias
+golang.org/x/crypto/internal/poly1305
+golang.org/x/crypto/nacl/box
+golang.org/x/crypto/nacl/secretbox
+golang.org/x/crypto/salsa20/salsa
+# golang.org/x/sys v0.42.0
+## explicit; go 1.25.0
+golang.org/x/sys/cpu
+golang.org/x/sys/windows
