@@ -50,6 +50,8 @@ agenix -e clankhare-env.age
 TOKEN=DISCORD_TOKEN
 MINECRAFT_IP=10.0.0.255
 RCON_Password=PASSWORD
+DISCORD_CHANNEL_ID=1111111111111111111
+NATS_URL=127.0.0.1
 ```
 
 3. setup clankhare.nix module
