@@ -1,6 +1,7 @@
 package main
 
 import (
+	"Clankhare/bridge"
 	"Clankhare/commands"
 	"fmt"
 	"log"
@@ -49,10 +50,15 @@ func main() {
 			log.Fatalf("cannot create command %s: %v", cmd.Definition.Name, err)
 		}
 	}
+	shutdown, err := bridge.Start(session)
+	if err != nil {
+		log.Fatal("bridge failed to start:", err)
+	}
 
 	fmt.Println("Bot is now running. Press CTRL-C to exit.")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-sc
+	shutdown()
 	session.Close()
 }
