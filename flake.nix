@@ -17,8 +17,6 @@
         version = "0.0.1";
         src = ./.;
         vendorHash = null;
-        env.CGO_ENABLED = 1;
-        nativeBuildInputs = [pkgs.pkg-config];
         meta = {
           description = "The discord bot for the forgotten wonderland";
           homepage = "https://github.com/hexolexo/clankhare";
