@@ -52,7 +52,7 @@
 
           configFile = lib.mkOption {
             type = lib.types.path;
-            description = "Path to a file containing the bot token (keeps it out of the nix store)";
+            description = "Path to an env file (keeps secrets out of the nix store)";
           };
 
           user = lib.mkOption {
@@ -72,25 +72,20 @@
             group = cfg.group;
           };
           users.groups.${cfg.group} = {};
-
           systemd.services.clankhare = {
             description = "Clankhare discord bot";
             wantedBy = ["multi-user.target"];
-            after = ["network.target"];
-
+            after = ["network-online.target"];
             serviceConfig = {
               ExecStart = "${cfg.package}/bin/discord-bot";
-              User = cfg.user;
-              Group = cfg.group;
-
-              # Reads the token from a file and injects it as an env var —
-              # adjust the var name to whatever your bot actually reads
               EnvironmentFile = cfg.configFile;
-
-              # Basic hardening — tighten as needed
-              NoNewPrivileges = true;
-              PrivateTmp = true;
+              # DynamicUser handles user creation — no need for users.users/groups blocks
+              DynamicUser = true;
               Restart = "on-failure";
+              RestartSec = "5s";
+              PrivateTmp = true;
+              ProtectSystem = "strict";
+              ProtectHome = true;
             };
           };
         };
